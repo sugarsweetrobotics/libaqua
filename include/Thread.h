@@ -5,29 +5,9 @@
  * @author ysuga@ysuga.net
  * @date 2010/11/02
  ********************************************************/
+#pragma once
 
-#ifndef THREAD_HEADER_INCLUDED
-#define THREAD_HEADER_INCLUDED
-
-#ifdef WIN32
-// 以下の ifdef ブロックは DLL からのエクスポートを容易にするマクロを作成するための 
-// 一般的な方法です。この DLL 内のすべてのファイルは、コマンド ラインで定義された LIBROOMBA_EXPORTS
-// シンボルでコンパイルされます。このシンボルは、この DLL を使うプロジェクトで定義することはできません。
-// ソースファイルがこのファイルを含んでいる他のプロジェクトは、 
-// LIBREVAST_API 関数を DLL からインポートされたと見なすのに対し、この DLL は、このマクロで定義された
-// シンボルをエクスポートされたと見なします。
-#ifdef _USRDLL
-#define LIBTHREAD_API __declspec(dllexport)
-#else
-#define LIBTHREAD_API __declspec(dllimport)
-#endif
-
-#else
-#define LIBTHREAD_API 
-
-
-#endif // ifdef WIN32
-
+#include "aqua.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -38,85 +18,97 @@
 #endif
 
 
-namespace net {
-	namespace ysuga {
+namespace ssr {
 
-		class Mutex {
-		private:
+  /**
+   *
+   */
+  class Mutex {
+  private:
 #ifdef WIN32
-			HANDLE m_Handle;
+    HANDLE m_Handle;
 #else
-			pthread_mutex_t m_Handle;
+    pthread_mutex_t m_Handle;
 #endif
-
-
-		public:
-			Mutex() {
+    
+    
+  public:
+    Mutex() {
 #ifdef WIN32
-				m_Handle = ::CreateMutex(NULL, 0, NULL);
+      m_Handle = ::CreateMutex(NULL, 0, NULL);
 #else
-				pthread_mutex_init(&m_Handle, NULL);
+      pthread_mutex_init(&m_Handle, NULL);
 #endif
-			}
-
-			virtual ~Mutex() {
+    }
+    
+    virtual ~Mutex() {
 #ifdef WIN32
-				::CloseHandle(m_Handle);
+      ::CloseHandle(m_Handle);
 #else
-			  pthread_mutex_destroy(&m_Handle);
+      pthread_mutex_destroy(&m_Handle);
 #endif
-			}
-
-		public:
-			void Lock() {
+    }
+    
+  public:
+    void Lock() {
 #ifdef WIN32
-				::WaitForSingleObject(m_Handle, INFINITE);
+      ::WaitForSingleObject(m_Handle, INFINITE);
 #else
-			  
-			  pthread_mutex_lock(&m_Handle);
+      pthread_mutex_lock(&m_Handle);
 #endif
-			}
-
-			void Unlock() {
+    }
+    
+    void Unlock() {
 #ifdef WIN32
-				::ReleaseMutex(m_Handle);
+      ::ReleaseMutex(m_Handle);
 #else
-			  pthread_mutex_unlock(&m_Handle);
+      pthread_mutex_unlock(&m_Handle);
 #endif
-			}
-		};
+    }
+  };
 
-		class Thread
-		{
-		private:
+  /**
+   *
+   */
+  class MutexBinder {
+  private:
+    Mutex& m_mutex;
+  public:
+  MutexBinder(Mutex& mutex) : m_mutex(mutex) {m_mutex.Lock();}
+    ~MutexBinder() {m_mutex.Unlock();}
+  };
+  
+  /**
+   *
+   */
+  class AQUA_API Thread
+  {
+  private:
 #ifdef WIN32
-			HANDLE m_Handle;
-			DWORD m_ThreadId;
+    HANDLE m_Handle;
+    DWORD m_ThreadId;
 #else
-			pthread_t m_Handle;
+    pthread_t m_Handle;
 #endif
-		public:
-			LIBTHREAD_API Thread(void);
-			LIBTHREAD_API virtual ~Thread(void);
-
-		public:
-			LIBTHREAD_API void Start();
-
-			LIBTHREAD_API virtual void Run() {};
-
-			LIBTHREAD_API void Join();
-
-			LIBTHREAD_API void Exit(unsigned long exitCode);
-
-		public:
-			LIBTHREAD_API static void Sleep(unsigned long milliSeconds);
-		};
-
-	};
+  public:
+    Thread(void);
+    virtual ~Thread(void);
+    
+  public:
+    void Start();
+    
+    virtual void Run() {};
+    
+    void Join();
+    
+    void Exit(unsigned long exitCode);
+    
+  public:
+    static void Sleep(unsigned long milliSeconds);
+  };
 };
 
 
-#endif
 
 /*******************************************************
  * Copyright  2010, ysuga.net all rights reserved.

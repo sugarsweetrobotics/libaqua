@@ -8,7 +8,7 @@
 #include <errno.h>
 #endif
 
-using namespace net::ysuga;
+using namespace ssr;
 
 Thread::Thread(void)
 {

@@ -4,10 +4,9 @@
  * @copyright RT Corp. 2012 All rights reserved.
  */
 
-#ifndef TIMER_HEADER_INCLUDED
-#define TIMER_HEADER_INCLUDED
+#pragma once
 
-
+#include "aqua.h"
 #include "type.h"
 #include "TimeSpec.h"
 
@@ -17,12 +16,12 @@
 
 /**
  * @if jp
- * @brief PCWrapperライブラリ用の名前空間
+ * @brief Ssrライブラリ用の名前空間
  * @else
- * @brief Namespace for PCWrapper Library
+ * @brief Namespace for Ssr Library
  * @endif
  */
-namespace pcwrapper {
+namespace ssr {
 
 
 	/**
@@ -33,7 +32,7 @@ namespace pcwrapper {
 	 * @brief Timer class
 	 * @endif
 	 */
-	class PCWRAPPER_API Timer
+	class AQUA_API Timer
 	{
 	private:
 #ifdef WIN32
@@ -86,6 +85,3 @@ namespace pcwrapper {
 	};
 }
 
-
-
-#endif

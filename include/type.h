@@ -4,8 +4,7 @@
  * @copyright Sugar Sweet Robotics Co., Ltd.
  */
 
-#ifndef TYPE_HEADER_INCLUDED
-#define TYPE_HEADER_INCLUDED
+#pragma once
 
 /**
  * setting for stdint.h
@@ -22,8 +21,4 @@ typedef unsigned long uint64_t;
 #else
 #include <stdint.h> // VC2010‚à‚µ‚­‚ÍLinux—p
 #endif
-
-#define ROOBMA_INFINITE 0xFFFFFFFF
-
-#endif // #ifndef TYPE_HEADER_INCLUDED
 

@@ -13,7 +13,7 @@
 
 #include "Timer.h"
 
-using namespace pcwrapper;
+using namespace ssr;
 
 
 Timer::Timer(void)
