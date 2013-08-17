@@ -24,7 +24,7 @@ namespace ssr {
 	 * 
 	 * @else
 	 * @class TimeSpec
-     *
+	 *
 	 * @endif
 	 */
 	struct AQUA_API TimeSpec {
@@ -35,7 +35,11 @@ namespace ssr {
 		uint32_t usec; //< Micro Second
 
 	public:
-
+		uint32_t getUsec() {
+		  return sec * 1000000 + usec;
+		}
+	public:
+		
 		/**
 		 * @if jp
 		 * @brief コンストラクタ
