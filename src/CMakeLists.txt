@@ -7,6 +7,11 @@ find_package(Threads)
 add_library(${PROJECT_NAME} SHARED ${_srcs})
 add_library(${PROJECT_NAME}Static STATIC  ${_srcs})
 
+
+set_target_properties(${PROJECT_NAME}Static PROPERTIES 
+  COMPILE_FLAGS "-DaquaStatic_EXPORTS") 
+
+
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}Static
     EXPORT ${PROJECT_NAME}
     RUNTIME DESTINATION ${BIN_INSTALL_DIR} 

@@ -1,11 +1,11 @@
 #pragma once
 
 #ifdef WIN32
-#ifdef AQUA_EXPORTS
+#ifdef aqua_EXPORTS
 #define AQUA_API __declspec(dllexport)
 #else
-#ifdef AQUA_STATIC_EXPORTS
-#define AQUA_API 
+#ifdef aquaStatic_EXPORTS
+#define AQUA_API
 #else
 #define AQUA_API __declspec(dllimport)
 #endif
