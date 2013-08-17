@@ -12,8 +12,8 @@ enum {
 
 
 #ifdef __cplusplus
-namespace net {
-	namespace ysuga {
+namespace ssr {
+
 #endif
 
 #include <stdio.h>
@@ -125,8 +125,8 @@ static int myGetch() {
 
 
 #ifdef __cplusplus
-	} // namespace ysuga
-} // namespace net
+
+} // namespace ssr
 #endif
 
 
