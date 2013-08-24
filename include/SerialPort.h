@@ -136,7 +136,7 @@ namespace ssr {
       if((m_Fd = open(filename, O_RDWR /*| O_NOCTTY |O_NONBLOCK*/)) < 0) {
 	throw ComOpenException();
       }
-      std::cout << "fopen ok" << std::endl;
+      ///std::cout << "fopen ok" << std::endl;
       struct termios tio;
       memset(&tio, 0, sizeof(tio));
       cfsetspeed(&tio, baudrate);

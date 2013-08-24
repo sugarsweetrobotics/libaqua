@@ -81,18 +81,8 @@ namespace ssr {
     ~MutexBinder() {m_mutex.Unlock();}
   };
 
-  static THREAD_ROUTINE StartRoutine(void* arg)
-  {
-    Thread* threadObject = (Thread*)arg;
-    threadObject->Run();
-    threadObject->Exit(0);
-#ifdef WIN32
-    ExitThread(0);
-#else 
-    pthread_exit(0);
-#endif
-    return 0;
-  }
+  static THREAD_ROUTINE StartRoutine(void* arg);
+
   
   /**
    *
@@ -140,19 +130,20 @@ namespace ssr {
 #endif
     }
     
-    void Exit(unsigned long exitCode) {
+    static void Sleep(unsigned long milliSeconds) {
 #ifdef WIN32
-	::Sleep(milliSeconds);
+      ::Sleep(milliSeconds);
 #else
-  struct timespec interval;
-  interval.tv_sec = milliSeconds / 1000;
-  interval.tv_nsec = (milliSeconds % 1000) * 1000000;
-  nanosleep(&interval, NULL);
+      struct timespec interval;
+      interval.tv_sec = milliSeconds / 1000;
+      interval.tv_nsec = (milliSeconds % 1000) * 1000000;
+      nanosleep(&interval, NULL);
 #endif
     }
     
   public:
-    static void Sleep(unsigned long milliSeconds) {
+
+    void Exit(unsigned long exitCode) {
 #ifdef WIN32
 	ExitThread(exitCode);
 #else
@@ -160,6 +151,21 @@ namespace ssr {
 #endif
     }
   };
+
+
+  static THREAD_ROUTINE StartRoutine(void* arg)
+  {
+    Thread* threadObject = (Thread*)arg;
+    threadObject->Run();
+    threadObject->Exit(0);
+#ifdef WIN32
+    ExitThread(0);
+#else 
+    pthread_exit(0);
+#endif
+    return 0;
+  }
+
 };
 
 
