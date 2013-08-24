@@ -14,6 +14,9 @@
 #include <windows.h>
 #include <mmsystem.h>
 #else
+#include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
 #include <string.h>
 #endif
 
@@ -34,7 +37,7 @@ namespace ssr {
    * @brief Timer class
    * @endif
    */
-  class AQUA_API Timer
+  class Timer
   {
   private:
 #ifdef WIN32
@@ -42,7 +45,8 @@ namespace ssr {
     LARGE_INTEGER m_Before;
     LARGE_INTEGER m_After;
 #endif
-
+    struct timeval m_Before;
+    struct timeval m_After;
   public:
     
     
@@ -86,7 +90,7 @@ namespace ssr {
 #ifdef WIN32
       ::QueryPerformanceCounter(&m_Before);	
 #else
-
+      gettimeofday(&m_Before, NULL);
 #endif
     }
     
@@ -102,10 +106,15 @@ namespace ssr {
 #ifdef WIN32
 	QueryPerformanceCounter(&m_After);
 	DWORD dwTime = (DWORD)((m_After.QuadPart - m_Before.QuadPart) * 1000000 / m_Frequency.QuadPart);
-	pCurrentTime->sec =  dwTime / 1000000;
-	pCurrentTime->usec = dwTime % 1000000;
+	currentTime->sec =  dwTime / 1000000;
+	currentTime->usec = dwTime % 1000000;
 #else
-
+	//clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &m_After);
+	//uint64_t dwTime = (m_After.tv_sec - m_Before.tv_sec) * 1000 * 1000 + (m_After.tv_nsec - m_Before.tv_nsec) * 1000;
+	gettimeofday(&m_After, NULL);
+	uint64_t dwTime = (m_After.tv_sec - m_Before.tv_sec) * 1000 * 1000 + (m_After.tv_usec - m_Before.tv_usec);
+	currentTime->sec  = dwTime / 1000000;
+	currentTime->usec = dwTime % 1000000;
 #endif
     }
 
