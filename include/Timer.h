@@ -44,9 +44,10 @@ namespace ssr {
     LARGE_INTEGER m_Frequency;
     LARGE_INTEGER m_Before;
     LARGE_INTEGER m_After;
-#endif
+#else
     struct timeval m_Before;
     struct timeval m_After;
+#endif
   public:
     
     
