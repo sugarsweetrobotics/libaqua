@@ -133,8 +133,10 @@ namespace ssr {
 	//uint64_t dwTime = (m_After.tv_sec - m_Before.tv_sec) * 1000 * 1000 + (m_After.tv_nsec - m_Before.tv_nsec) * 1000;
 	gettimeofday(&m_After, NULL);
 	uint64_t dwTime = (m_After.tv_sec - m_Before.tv_sec) * 1000 * 1000 + (m_After.tv_usec - m_Before.tv_usec);
-	currentTime->sec  = dwTime / 1000000;
-	currentTime->usec = dwTime % 1000000;
+	TimeSpec currentTime;
+	currentTime.sec  = dwTime / 1000000;
+	currentTime.usec = dwTime % 1000000;
+	return currentTime;
 #endif
 	}
 
