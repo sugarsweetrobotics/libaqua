@@ -119,6 +119,25 @@ namespace ssr {
 #endif
     }
 
+	TimeSpec getTimeOfDay() {
+#ifdef WIN32
+	LARGE_INTEGER now;
+	QueryPerformanceCounter(&now);
+	DWORD dwTime = (DWORD)((now.QuadPart) * 1000000 / m_Frequency.QuadPart);
+	TimeSpec currentTime;
+	currentTime.sec =  dwTime / 1000000;
+	currentTime.usec = dwTime % 1000000;
+	return currentTime;
+#else
+	//clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &m_After);
+	//uint64_t dwTime = (m_After.tv_sec - m_Before.tv_sec) * 1000 * 1000 + (m_After.tv_nsec - m_Before.tv_nsec) * 1000;
+	gettimeofday(&m_After, NULL);
+	uint64_t dwTime = (m_After.tv_sec - m_Before.tv_sec) * 1000 * 1000 + (m_After.tv_usec - m_Before.tv_usec);
+	currentTime->sec  = dwTime / 1000000;
+	currentTime->usec = dwTime % 1000000;
+#endif
+	}
+
   };
 }
 
