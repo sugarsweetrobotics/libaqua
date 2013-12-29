@@ -31,6 +31,9 @@
 #include <exception>
 #include <string>
 
+
+#include "SerialDevice.h"
+
 namespace ssr {
   class ComException : public std::exception {
   private:
@@ -76,7 +79,7 @@ namespace ssr {
    *
    * @brief Portable Serial Port Class
    ***************************************************/
-  class SerialPort {
+  class SerialPort : public SerialDevice {
   private:
 #ifdef WIN32
     HANDLE m_hComm;
