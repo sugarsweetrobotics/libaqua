@@ -136,7 +136,7 @@ namespace ssr {
       }
       
 #else
-      if((m_Fd = open(filename, O_RDWR /*| O_NOCTTY |O_NONBLOCK*/)) < 0) {
+      if((m_Fd = open(filename, O_RDWR | O_NDELAY /*| O_NOCTTY |O_NONBLOCK*/)) < 0) {
 	throw ComOpenException();
       }
       ///std::cout << "fopen ok" << std::endl;
