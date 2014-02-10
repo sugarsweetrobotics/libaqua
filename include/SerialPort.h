@@ -35,6 +35,8 @@
 #include "SerialDevice.h"
 
 namespace ssr {
+
+
   class ComException : public std::exception {
   private:
     std::string msg;
@@ -80,6 +82,15 @@ namespace ssr {
    * @brief Portable Serial Port Class
    ***************************************************/
   class SerialPort : public SerialDevice {
+  public:
+    const static int ODD_PARITY = 0;
+    const static int EVEN_PARITY = 1;
+    const static int NO_PARITY = 2;
+
+    const static int ONE_STOPBIT = 0;
+    const static int ONE5_STOPBITS = 1;
+    const static int TWO_STOPBITS = 2;
+
   private:
 #ifdef WIN32
     HANDLE m_hComm;
@@ -98,7 +109,7 @@ namespace ssr {
      * @param filename Filename of Serial Port (eg., "COM0", "/dev/tty0")
      * @baudrate baudrate. (eg., 9600, 115200)
      */
-    SerialPort(const char* filename, int baudrate) {
+    SerialPort(const char* filename, int baudrate, int parity=NO_PARITY, int stopbits=ONE_STOPBIT) {
 #ifdef WIN32
       DCB dcb;
       m_hComm = 0;
@@ -127,8 +138,21 @@ namespace ssr {
       dcb.fRtsControl        = RTS_CONTROL_DISABLE;
       dcb.fAbortOnError      = 0;
       dcb.ByteSize           = 8;
-      dcb.Parity             = NOPARITY;
-      dcb.StopBits           = ONESTOPBIT;
+      if (parity == NO_PARITY) {
+	dcb.Parity             = NOPARITY;
+      } else if (parity == EVEN_PARITY) {
+	dcb.Parity             = EVENPARITY;
+      } else if (parity == ODD_PARITY) {
+	dcb.Parity             = ODDPARITY;
+      }
+      
+      if (stopbits == ONE_STOPBIT) {
+	dcb.StopBits           = ONESTOPBIT;
+      } else if (stopbits == ONE5_STOPBITS) {
+	dcb.StopBits           = ONE5STOPBITS;
+      } else if (stopbits == TWO_STOPBITS) {
+	dcb.StopBits           = TWOSTOPBITS;
+      }
       
       if (!SetCommState (m_hComm, &dcb)) {
 	CloseHandle(m_hComm); m_hComm = 0;
@@ -144,6 +168,16 @@ namespace ssr {
       memset(&tio, 0, sizeof(tio));
       cfsetspeed(&tio, baudrate);
       tio.c_cflag |= CS8 | CLOCAL | CREAD;
+      if (stopbits == TWO_STOPBITS) {
+	tio.c_cflag |= CSTOPB;
+      }
+
+      if (parity == ODD_PARITY) {
+	tio.c_cflag |= PARENB | PARODD;
+      } else      if (parity == EVEN_PARITY) {
+	tio.c_cflag |= PARENB;
+      }
+
       tcsetattr(m_Fd, TCSANOW, &tio);
 #endif
     }
