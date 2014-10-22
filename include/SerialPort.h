@@ -33,6 +33,7 @@
 
 
 #include "SerialDevice.h"
+#include "Timer.h"
 
 namespace ssr {
 
@@ -310,6 +311,100 @@ namespace ssr {
 	return ret;
 #endif
     }
+
+	int ReadLine(char* dst, const unsigned int maxSize, const char* endLine = "\x0D\x0A") {
+		int counter = 0;
+		int endMarkLen = strlen(endLine);
+		while(true) {
+				if(this->GetSizeInRxBuffer() >= 1) {
+					int byte = Read(dst, 1);
+					if(byte == 0) {
+						return -1;
+					}
+					if (dst[0] != 0x0A && dst[0] != 0x0D) {
+						counter++;
+						break;
+					}
+				}
+		}
+
+		while(true) {
+			while(true) {
+				if(this->GetSizeInRxBuffer() > 0) {
+					break;
+				}
+			}
+			int byte = Read(dst+counter, 1);
+			if(byte == 0) {
+				return -1;
+			}
+			if(dst[counter] == 0x0A || dst[counter] == 0x0D) {
+				dst[counter] = 0;
+				return counter+1;
+			}
+			counter++;
+		}
+	}
+
+	int ReadLineWithTimeout(char* dst, const unsigned int maxSize, ssr::TimeSpec& timeout, const char* endLine = "\x0A\x0D") {
+		int counter = 0;
+		int endMarkLen = strlen(endLine);
+		TimeSpec currentTime;
+		m_timer.tick();
+		while(true) {
+				if(this->GetSizeInRxBuffer() >= 1) {
+					int byte = Read(dst, 1);
+					if(byte == 0) {
+						return -1;
+					}
+					if (dst[0] != 0x0A && dst[0] != 0x0D) {
+						counter++;
+						break;
+					}
+				}
+				m_timer.tack(&currentTime);
+				if (currentTime > timeout) {
+					return -1;
+				}
+		}
+
+		while(true) {
+			while(true) {
+				if(this->GetSizeInRxBuffer() >= 1) {
+					int byte = Read(dst+counter, 1);
+					if(byte == 0) {
+						return -1;
+					}
+					break;
+				}
+				m_timer.tack(&currentTime);
+				if (currentTime > timeout) {
+					return -1;
+				}
+			}
+			if(dst[counter] == 0x0A || dst[counter] == 0x0D) {
+				dst[counter] = 0;
+				return counter+1;
+			}
+			counter++;
+		}
+	}
+
+	Timer m_timer;
+
+	int ReadWithTimeout(void *dst, const unsigned int size, const ssr::TimeSpec timeout) {
+		m_timer.tick();
+		TimeSpec currentTime;
+		while(true) {
+			if(this->GetSizeInRxBuffer() >= size) { 
+				return Read(dst, size);
+			}
+			m_timer.tack(&currentTime);
+			if (currentTime > timeout) {
+				return -1;
+			}
+		}
+	}
     
   };
   
