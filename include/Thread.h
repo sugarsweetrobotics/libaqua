@@ -8,6 +8,7 @@
 #pragma once
 
 #include "aqua.h"
+#include <exception>
 
 #ifdef WIN32
 #include <windows.h>
@@ -21,7 +22,20 @@
 #define THREAD_ROUTINE void*
 #endif
 
+
+#include "TimeSpec.h"
+
 namespace ssr {
+
+	class MutexTimeoutException : public std::exception {
+	public:
+		MutexTimeoutException() {}
+
+		virtual ~MutexTimeoutException() {}
+
+	public:
+		const char* what() const throw() { return "Mutex Lock Timeout."; }
+	};
 
   /**
    *
@@ -53,9 +67,19 @@ namespace ssr {
     }
     
   public:
-    void Lock() {
+    bool Lock(const ssr::TimeSpec& timeout=INFINITETIME) {
 #ifdef WIN32
-      ::WaitForSingleObject(m_Handle, INFINITE);
+		if (timeout == INFINITETIME) {
+			::WaitForSingleObject(m_Handle, INFINITE);
+			return true;
+		}
+		else {
+			DWORD ret = WaitForSingleObject(m_Handle, timeout.sec * 1000 + timeout.usec / 1000);
+			if (ret == WAIT_TIMEOUT) {
+				return false;
+			}
+		}
+
 #else
       pthread_mutex_lock(&m_Handle);
 #endif
@@ -77,7 +101,11 @@ namespace ssr {
   private:
     Mutex& m_mutex;
   public:
-  MutexBinder(Mutex& mutex) : m_mutex(mutex) {m_mutex.Lock();}
+  MutexBinder(Mutex& mutex, const ssr::TimeSpec& timeout=INFINITETIME) : m_mutex(mutex) {
+	  if (!m_mutex.Lock(timeout)) {
+		  throw MutexTimeoutException();
+	  }
+  }
     ~MutexBinder() {m_mutex.Unlock();}
   };
 
