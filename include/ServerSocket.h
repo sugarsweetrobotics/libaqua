@@ -18,11 +18,11 @@ namespace ssr {
 
   private:
 #ifdef WIN32
-    int m_SeverSocket;
+#else // WIN32
+    int m_ServerSocket;
 
     struct sockaddr_in m_SockAddr;//,caddr;
-    char buf[BUFSIZ];
-#else // WIN32
+    //    char buf[BUFSIZ];
 
 #endif
 
@@ -41,31 +41,39 @@ namespace ssr {
   public:
 
     void Close() {
-      throw SocketException("Close failed.");
+      close(m_ServerSocket);
     }
 
     void Bind(const unsigned int port) {
-      memset((char*)&m_SockAddr, 0, sizeof(saddr));
+      memset((char*)&m_SockAddr, 0, sizeof(m_SockAddr));
       m_SockAddr.sin_family      = AF_INET;
-      m_SockAgit ddr.sin_addr.s_addr = INADDR_ANY;
-  saddr.sin_port        = htons(PORT);
+      m_SockAddr.sin_addr.s_addr = INADDR_ANY;
+      m_SockAddr.sin_port        = htons(port);
 
-  if( bind(s1, (struct sockaddr*)&saddr, sizeof(saddr))<0) {
-    perror("bind");    exit(1);
-  }
-
-      throw SocketException("Bind Failed.");
+      if(bind(m_ServerSocket, (struct sockaddr*)&m_SockAddr, sizeof(m_SockAddr))<0) {
+	throw SocketException("Bind Failed.");
+      }
     }
 
-
     void Listen(const unsigned int backlog = 5) {
-      throw SocketException("Listen Failed.");
+      if (listen(m_ServerSocket, backlog) < 0) {
+	throw SocketException("Listen Failed.");
+      }
     }
 
 
     Socket Accept() {
-      throw SocketException("Accept Failed.");
+      struct sockaddr_in sockaddr_;
+      int client_sock;
+      socklen_t len;
+      len = sizeof(sockaddr_);
+      if ((client_sock = accept(m_ServerSocket, (struct sockaddr*)&sockaddr_, &len)) < 0) {
+	throw SocketException("Accept Failed.");
+      }
+      return Socket(client_sock, sockaddr_);
     }
+
+    
   };
 
 };

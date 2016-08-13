@@ -1,3 +1,3 @@
 
 
-build/serversockettest 12345 &
+build/serversockettest 12345

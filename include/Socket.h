@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <sys/ioctl.h>
 #endif // WIN32
 
 namespace ssr {
@@ -77,6 +78,34 @@ namespace ssr {
       }
     }
 
+    Socket(const Socket& socket) {
+      CopyFrom(socket);
+    }
+
+    void operator=(const Socket& socket) {
+      CopyFrom(socket);
+    }
+
+    void CopyFrom(const Socket& socket) {
+#ifdef WIN32
+
+
+#else // WIN32
+      m_SockAddr = socket.m_SockAddr;
+      m_Socket = socket.m_Socket;
+#endif
+    }
+
+
+#ifdef WIN32
+#else // WIN32
+    Socket(int hsocket, struct sockaddr_in sockaddr_) {
+      m_Socket = hsocket;
+      m_SockAddr = sockaddr_;
+    }
+
+#endif
+    
     /**
      * Desctructor
      */
@@ -85,22 +114,46 @@ namespace ssr {
     }
 
     int GetSizeInRxBuffer() {
-      return -1;
+#ifdef WIN32
+
+#else
+      int count;
+      ioctl(m_Socket, FIONREAD, &count);
+      return count;
+#endif
     }
 
     int Write(const void* src, const unsigned int size) {
-      return -1;
+#ifdef WIN32
+
+#else
+      return send(m_Socket, src, size, 0);
+#endif
+      /*
+      int n;
+      if ((n = send(src, size)) != size) {
+	return -1;
+      }
+      return n;
+      */
     }
 
     int Read(void* dst, const unsigned int size) {
-      return -1;
+#ifdef WIN32
+
+#else
+      return recv(m_Socket, dst, size, 0);
+#endif      
     }
 
     int Close() {
+#ifdef WIN32
+#else
       if (close(m_Socket)< 0) {
 	return -1;
       }
       return 0;
+#endif
     }
   };
 };

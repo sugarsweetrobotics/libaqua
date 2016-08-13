@@ -31,7 +31,7 @@ namespace ssr {
 	public:
 		MutexTimeoutException() {}
 
-		virtual ~MutexTimeoutException() {}
+		virtual ~MutexTimeoutException() throw() {}
 
 	public:
 		const char* what() const throw() { return "Mutex Lock Timeout."; }
