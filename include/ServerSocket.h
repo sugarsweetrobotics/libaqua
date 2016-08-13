@@ -5,37 +5,67 @@
 #include "SerialDevice.h"
 #include "Socket.h"
 
+#ifdef WIN32
+
+#else // WIN32
+
+#endif
+
 namespace ssr {
 
 
   class ServerSocket {
+
+  private:
+#ifdef WIN32
+    int m_SeverSocket;
+
+    struct sockaddr_in m_SockAddr;//,caddr;
+    char buf[BUFSIZ];
+#else // WIN32
+
+#endif
+
     
   public:
-    ServerSocket(const unsigned int port) {
-
+    ServerSocket() {
+      if( (m_ServerSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) { 
+	throw SocketException("socket failed.");
+      }
     }
-
 
     ~ServerSocket() {
     }
 
 
   public:
-    
-    int bind() {
-      return -1;
+
+    void Close() {
+      throw SocketException("Close failed.");
+    }
+
+    void Bind(const unsigned int port) {
+      memset((char*)&m_SockAddr, 0, sizeof(saddr));
+      m_SockAddr.sin_family      = AF_INET;
+      m_SockAgit ddr.sin_addr.s_addr = INADDR_ANY;
+  saddr.sin_port        = htons(PORT);
+
+  if( bind(s1, (struct sockaddr*)&saddr, sizeof(saddr))<0) {
+    perror("bind");    exit(1);
+  }
+
+      throw SocketException("Bind Failed.");
     }
 
 
-    int listen(const unsigned int backlog = 5) {
-      return -1;
+    void Listen(const unsigned int backlog = 5) {
+      throw SocketException("Listen Failed.");
     }
 
 
-    Socket* accept() {
-      return NULL;
+    Socket Accept() {
+      throw SocketException("Accept Failed.");
     }
-
-
   };
+
 };
