@@ -1,13 +1,14 @@
 
+#include "Socket.h"
 #include <stdlib.h>
 #include <iostream>
 #include "Thread.h"
-#include "Socket.h"
 
 using namespace ssr;
 int main(int argc, char* argv[]) {
   try {
     std::cout << "Socket Test." << std::endl;
+	SocketInitializer si;
 
     if (argc <= 2) return -1;
     Socket socket(argv[1], atoi(argv[2]));

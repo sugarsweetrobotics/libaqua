@@ -1,13 +1,15 @@
 #pragma once
 
-#include <stdint.h>
-#include <exception>
-#include <string>
-#include <sstream>
-#include "SerialDevice.h"
+
+#define _WINSOCKAPI_
+
 
 #ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#include <windows.h>
 
+#include <stdio.h>
 #else // WIN32
 #include <unistd.h>
 #include <stdlib.h>
@@ -18,7 +20,37 @@
 #include <sys/ioctl.h>
 #endif // WIN32
 
+
+#include <stdint.h>
+#include <exception>
+#include <string>
+#include <sstream>
+#include "SerialDevice.h"
+
 namespace ssr {
+	class SocketInitializer {
+	private:
+		WSADATA wsaData;
+
+	public:
+		SocketInitializer() {
+#ifdef WIN32
+			WSAStartup(MAKEWORD(2, 0), &wsaData);
+#else
+
+#endif
+		}
+
+		~SocketInitializer() {
+#ifdef WIN32
+			WSAStartup(MAKEWORD(2, 0), &wsaData);
+#else
+
+#endif
+		}
+
+	};
+	
 
   class SocketException : public std::exception {
   private:
@@ -43,7 +75,10 @@ namespace ssr {
   private:
 
 #ifdef WIN32
-
+	  
+	  SOCKET m_Socket;
+	  struct sockaddr_in m_SockAddr;
+	  int len;
 
 #else // WIN32
     int m_Socket;
@@ -57,6 +92,31 @@ namespace ssr {
      * Constructor
      */
     Socket(const char* address, const uint32_t port) {
+#ifdef WIN32
+		m_Socket = socket(AF_INET, SOCK_STREAM, 0);
+		if (m_Socket == INVALID_SOCKET) {
+			throw SocketException("socket function failed.");
+		}
+
+		m_SockAddr.sin_family = AF_INET;
+		m_SockAddr.sin_port = htons(12345);
+
+		m_SockAddr.sin_addr.S_un.S_addr = inet_addr(address);
+		if (m_SockAddr.sin_addr.S_un.S_addr == 0xffffffff) {
+			struct hostent *host;
+
+			host = gethostbyname(address);
+			if (host == NULL) {
+				throw SocketException("gethostbyname failed.");
+			}
+			m_SockAddr.sin_addr.S_un.S_addr =
+				*(unsigned int *)host->h_addr_list[0];
+		}
+
+		if (connect(m_Socket, (struct sockaddr *)&m_SockAddr, sizeof(m_SockAddr)) < 0) {
+			throw SocketException("connect failed.");
+		}
+#else
       if ((m_Socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 	throw SocketException("socket function failed.");
       }
@@ -76,6 +136,7 @@ namespace ssr {
 	ss << "Connect Failed. (address=" << address << ", port=" << port << ")";
 	throw SocketException(ss.str().c_str());
       }
+#endif
     }
 
     Socket(const Socket& socket) {
@@ -88,7 +149,8 @@ namespace ssr {
 
     void CopyFrom(const Socket& socket) {
 #ifdef WIN32
-
+		m_SockAddr = socket.m_SockAddr;
+		m_Socket = socket.m_Socket;
 
 #else // WIN32
       m_SockAddr = socket.m_SockAddr;
@@ -98,6 +160,10 @@ namespace ssr {
 
 
 #ifdef WIN32
+	Socket(SOCKET hsocket, struct sockaddr_in sockaddr_) {
+		m_Socket = hsocket;
+		m_SockAddr = sockaddr_;
+	}
 #else // WIN32
     Socket(int hsocket, struct sockaddr_in sockaddr_) {
       m_Socket = hsocket;
@@ -110,12 +176,18 @@ namespace ssr {
      * Desctructor
      */
     ~Socket() {
+#ifdef WIN32
+		closesocket(m_Socket);
+#else
       close(m_Socket);
+#endif
     }
 
     int GetSizeInRxBuffer() {
 #ifdef WIN32
-
+		unsigned long count;
+		ioctlsocket(m_Socket, FIONREAD, &count);
+		return count;
 #else
       int count;
       ioctl(m_Socket, FIONREAD, &count);
@@ -125,7 +197,7 @@ namespace ssr {
 
     int Write(const void* src, const unsigned int size) {
 #ifdef WIN32
-
+		return send(m_Socket, (const char*)src, size, 0);
 #else
       return send(m_Socket, src, size, 0);
 #endif
@@ -140,7 +212,7 @@ namespace ssr {
 
     int Read(void* dst, const unsigned int size) {
 #ifdef WIN32
-
+		return recv(m_Socket, (char*)dst, size, 0);
 #else
       return recv(m_Socket, dst, size, 0);
 #endif      
@@ -148,6 +220,10 @@ namespace ssr {
 
     int Close() {
 #ifdef WIN32
+		if (closesocket(m_Socket) < 0) {
+			return -1;
+		}
+		return 0;
 #else
       if (close(m_Socket)< 0) {
 	return -1;

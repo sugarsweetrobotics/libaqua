@@ -1,15 +1,18 @@
+
+#include "ServerSocket.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <exception>
 
 #include <iostream>
 #include "Thread.h"
-#include "ServerSocket.h"
 using namespace ssr;
 
 int main(int argc, char* argv[]) {
   std::cout << "Server Test." << std::endl;
   try {
+	  SocketInitializer si;
     if (argc <= 1) throw SocketException("Invalid Argument");
     ServerSocket socket;
     socket.Bind(atoi(argv[1]));
