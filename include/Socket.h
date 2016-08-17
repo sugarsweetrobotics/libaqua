@@ -30,7 +30,10 @@
 namespace ssr {
 	class SocketInitializer {
 	private:
+#ifdef WIN32
 		WSADATA wsaData;
+#else
+#endif
 
 	public:
 		SocketInitializer() {
@@ -86,18 +89,45 @@ namespace ssr {
     struct hostent*     m_HostEnt;
 #endif // WIN32
 
-
-  public:
-    /**
-     * Constructor
-     */
-    Socket(const char* address, const uint32_t port) {
+	private:
+    void initSocket() {
 #ifdef WIN32
 		m_Socket = socket(AF_INET, SOCK_STREAM, 0);
 		if (m_Socket == INVALID_SOCKET) {
 			throw SocketException("socket function failed.");
 		}
 
+#else
+      if ((m_Socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	throw SocketException("socket function failed.");
+      }
+
+#endif
+    }
+    
+  public:
+    Socket() {
+      initSocket();
+    }
+
+    /**
+     * Constructor
+     */
+    Socket(const char* address, const uint32_t port) {
+      initSocket();
+      Connect(address, port);
+    }
+
+    Socket(const Socket& socket) {
+      CopyFrom(socket);
+    }
+
+    void operator=(const Socket& socket) {
+      CopyFrom(socket);
+    }
+	public:
+    void Connect(const char* address, const uint32_t port) {
+#ifdef WIN32
 		m_SockAddr.sin_family = AF_INET;
 		m_SockAddr.sin_port = htons(12345);
 
@@ -116,11 +146,8 @@ namespace ssr {
 		if (connect(m_Socket, (struct sockaddr *)&m_SockAddr, sizeof(m_SockAddr)) < 0) {
 			throw SocketException("connect failed.");
 		}
-#else
-      if ((m_Socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-	throw SocketException("socket function failed.");
-      }
 
+#else
       memset((char*)&m_SockAddr, 0, sizeof(m_SockAddr));
 
       if( (m_HostEnt=gethostbyname(address))==NULL) {
@@ -137,14 +164,6 @@ namespace ssr {
 	throw SocketException(ss.str().c_str());
       }
 #endif
-    }
-
-    Socket(const Socket& socket) {
-      CopyFrom(socket);
-    }
-
-    void operator=(const Socket& socket) {
-      CopyFrom(socket);
     }
 
     void CopyFrom(const Socket& socket) {
