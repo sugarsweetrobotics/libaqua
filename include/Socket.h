@@ -208,7 +208,9 @@ namespace ssr {
       return count;
 #else
       int count = 0;
-      ioctl(m_Socket, FIONREAD, &count);
+      if (ioctl(m_Socket, FIONREAD, &count) != 0) {
+	return -1;
+      }
       return count;
 #endif
     }
