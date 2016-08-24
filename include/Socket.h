@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 
 #define _WINSOCKAPI_
 
@@ -92,29 +93,26 @@ namespace ssr {
 	private:
     void initSocket() {
 #ifdef WIN32
-		m_Socket = socket(AF_INET, SOCK_STREAM, 0);
-		if (m_Socket == INVALID_SOCKET) {
-			throw SocketException("socket function failed.");
-		}
-
+      m_Socket = socket(AF_INET, SOCK_STREAM, 0);
+      if (m_Socket == INVALID_SOCKET) {
+	throw SocketException("socket function failed.");
+      }
+      
 #else
       if ((m_Socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 	throw SocketException("socket function failed.");
       }
-
 #endif
     }
     
   public:
     Socket() {
-      initSocket();
     }
 
     /**
      * Constructor
      */
     Socket(const char* address, const uint32_t port) {
-      initSocket();
       Connect(address, port);
     }
 
@@ -125,39 +123,40 @@ namespace ssr {
     void operator=(const Socket& socket) {
       CopyFrom(socket);
     }
-	public:
+  public:
     void Connect(const char* address, const uint32_t port) {
+      initSocket();
 #ifdef WIN32
-		m_SockAddr.sin_family = AF_INET;
-		m_SockAddr.sin_port = htons(12345);
-
-		m_SockAddr.sin_addr.S_un.S_addr = inet_addr(address);
-		if (m_SockAddr.sin_addr.S_un.S_addr == 0xffffffff) {
-			struct hostent *host;
-
-			host = gethostbyname(address);
-			if (host == NULL) {
-				throw SocketException("gethostbyname failed.");
-			}
-			m_SockAddr.sin_addr.S_un.S_addr =
-				*(unsigned int *)host->h_addr_list[0];
-		}
-
-		if (connect(m_Socket, (struct sockaddr *)&m_SockAddr, sizeof(m_SockAddr)) < 0) {
-			throw SocketException("connect failed.");
-		}
-
+      m_SockAddr.sin_family = AF_INET;
+      m_SockAddr.sin_port = htons(port);
+      
+      m_SockAddr.sin_addr.S_un.S_addr = inet_addr(address);
+      if (m_SockAddr.sin_addr.S_un.S_addr == 0xffffffff) {
+	struct hostent *host;
+	
+	host = gethostbyname(address);
+	if (host == NULL) {
+	  throw SocketException("gethostbyname failed.");
+	}
+	m_SockAddr.sin_addr.S_un.S_addr =
+	  *(unsigned int *)host->h_addr_list[0];
+      }
+      
+      if (connect(m_Socket, (struct sockaddr *)&m_SockAddr, sizeof(m_SockAddr)) < 0) {
+	throw SocketException("connect failed.");
+      }
+      
 #else
       memset((char*)&m_SockAddr, 0, sizeof(m_SockAddr));
-
+      
       if( (m_HostEnt=gethostbyname(address))==NULL) {
 	throw SocketException("gethostbyname failed.");
       }
-
+      
       bcopy(m_HostEnt->h_addr, &m_SockAddr.sin_addr, m_HostEnt->h_length);
       m_SockAddr.sin_family = AF_INET;
       m_SockAddr.sin_port   = htons(port);
-
+      
       if (connect(m_Socket, (struct sockaddr *)&m_SockAddr, sizeof(m_SockAddr)) < 0){
 	std::ostringstream ss;
 	ss << "Connect Failed. (address=" << address << ", port=" << port << ")";
@@ -165,26 +164,26 @@ namespace ssr {
       }
 #endif
     }
-
+    
     void CopyFrom(const Socket& socket) {
 #ifdef WIN32
-		m_SockAddr = socket.m_SockAddr;
-		m_Socket = socket.m_Socket;
-
+      m_SockAddr = socket.m_SockAddr;
+      m_Socket = socket.m_Socket;
+      
 #else // WIN32
       m_SockAddr = socket.m_SockAddr;
       m_Socket = socket.m_Socket;
 #endif
     }
-
+    
 
 #ifdef WIN32
-	Socket(SOCKET hsocket, struct sockaddr_in sockaddr_) {
-		m_Socket = hsocket;
-		m_SockAddr = sockaddr_;
-	}
+    Socket(SOCKET hsocket, struct sockaddr_in sockaddr_) {
+      m_Socket = hsocket;
+      m_SockAddr = sockaddr_;
+    }
 #else // WIN32
-    Socket(int hsocket, struct sockaddr_in sockaddr_) {
+    Socket(int hsocket, struct sockaddr_in& sockaddr_) {
       m_Socket = hsocket;
       m_SockAddr = sockaddr_;
     }
@@ -196,19 +195,19 @@ namespace ssr {
      */
     ~Socket() {
 #ifdef WIN32
-		closesocket(m_Socket);
+      //closesocket(m_Socket);
 #else
-      close(m_Socket);
+      //close(m_Socket);
 #endif
     }
 
     int GetSizeInRxBuffer() {
 #ifdef WIN32
-		unsigned long count;
-		ioctlsocket(m_Socket, FIONREAD, &count);
-		return count;
+      unsigned long count;
+      ioctlsocket(m_Socket, FIONREAD, &count);
+      return count;
 #else
-      int count;
+      int count = 0;
       ioctl(m_Socket, FIONREAD, &count);
       return count;
 #endif
@@ -220,18 +219,11 @@ namespace ssr {
 #else
       return send(m_Socket, src, size, 0);
 #endif
-      /*
-      int n;
-      if ((n = send(src, size)) != size) {
-	return -1;
-      }
-      return n;
-      */
     }
 
     int Read(void* dst, const unsigned int size) {
 #ifdef WIN32
-		return recv(m_Socket, (char*)dst, size, 0);
+      return recv(m_Socket, (char*)dst, size, 0);
 #else
       return recv(m_Socket, dst, size, 0);
 #endif      
@@ -239,12 +231,12 @@ namespace ssr {
 
     int Close() {
 #ifdef WIN32
-		if (closesocket(m_Socket) < 0) {
-			return -1;
-		}
-		return 0;
+      if (closesocket(m_Socket) < 0) {
+	return -1;
+      }
+      return 0;
 #else
-      if (close(m_Socket)< 0) {
+      if (close(m_Socket) < 0) {
 	return -1;
       }
       return 0;

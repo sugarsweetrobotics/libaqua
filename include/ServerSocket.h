@@ -52,7 +52,7 @@ namespace ssr {
 
     void Close() {
 #ifdef WIN32
-		closesocket(m_ServerSocket);
+      closesocket(m_ServerSocket);
 #else
 
       close(m_ServerSocket);
@@ -93,7 +93,6 @@ namespace ssr {
 #endif
     }
 
-
     Socket Accept() {
 #ifdef WIN32
 		struct sockaddr_in sockaddr_;
@@ -112,6 +111,7 @@ namespace ssr {
       if ((client_sock = accept(m_ServerSocket, (struct sockaddr*)&sockaddr_, &len)) < 0) {
 	throw SocketException("Accept Failed.");
       }
+
       return Socket(client_sock, sockaddr_);
 #endif
     }
