@@ -82,6 +82,7 @@ namespace ssr {
 
 #else
       pthread_mutex_lock(&m_Handle);
+      return true;
 #endif
     }
     
