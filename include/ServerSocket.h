@@ -8,11 +8,24 @@
 #ifdef WIN32
 
 #else // WIN32
-
+//#include <sys/socket.h>
+//#include <unistd.h>
+//#include <stdio.h>
 #endif
 
 namespace ssr {
 
+  class TimeoutException : public std::exception {
+  public:
+    TimeoutException() {}
+    virtual ~TimeoutException() {}
+
+  public:
+    const char* what() const throw() {
+      return "Timeout Exception";
+
+    }
+  };
 
   class ServerSocket {
 
@@ -90,6 +103,34 @@ namespace ssr {
       if (listen(m_ServerSocket, backlog) < 0) {
 	throw SocketException("Listen Failed.");
       }
+#endif
+    }
+
+    Socket Accept(int timeoutUsec) {
+#ifdef WIN32
+#else
+      fd_set fds;
+      FD_ZERO(&fds);
+      FD_SET(m_ServerSocket, &fds);
+      
+      struct timeval timeout;
+      timeout.tv_sec = timeoutUsec / 100000;
+      timeout.tv_usec = timeoutUsec % 100000;
+      int result = select(m_ServerSocket+1, &fds, NULL, NULL, &timeout);
+      if (!FD_ISSET(m_ServerSocket, &fds)) {
+	throw TimeoutException();
+      }
+
+      struct sockaddr_in sockaddr_;
+      int client_sock;
+      socklen_t len;
+      len = sizeof(sockaddr_);
+      if ((client_sock = accept(m_ServerSocket, (struct sockaddr*)&sockaddr_, &len)) < 0) {
+	throw SocketException("Accept Failed.");
+      }
+
+      return Socket(client_sock, sockaddr_);
+
 #endif
     }
 
