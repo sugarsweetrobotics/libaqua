@@ -204,7 +204,9 @@ namespace ssr {
     int GetSizeInRxBuffer() {
 #ifdef WIN32
       unsigned long count;
-      ioctlsocket(m_Socket, FIONREAD, &count);
+	  if (ioctlsocket(m_Socket, FIONREAD, &count) != 0) {
+		  throw SocketException("ioctlsocket failed.");
+	  }
       return count;
 #else
       int count = 0;

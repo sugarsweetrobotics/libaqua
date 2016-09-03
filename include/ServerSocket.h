@@ -108,6 +108,7 @@ namespace ssr {
 
     Socket Accept(int timeoutUsec) {
 #ifdef WIN32
+		return Accept();
 #else
       fd_set fds;
       FD_ZERO(&fds);
