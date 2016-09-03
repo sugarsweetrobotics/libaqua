@@ -117,6 +117,10 @@ namespace ssr {
       timeout.tv_sec = timeoutUsec / 100000;
       timeout.tv_usec = timeoutUsec % 100000;
       int result = select(m_ServerSocket+1, &fds, NULL, NULL, &timeout);
+      if (result < 0) {
+	throw SocketException("select failed.");
+      }
+	  
       if (!FD_ISSET(m_ServerSocket, &fds)) {
 	throw TimeoutException();
       }
