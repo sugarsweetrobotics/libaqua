@@ -13,7 +13,8 @@
 
 #ifdef WIN32
 #include <windows.h>
-#else 
+#else
+#ifdef __linux__
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,6 +25,25 @@
 #include <errno.h>
 #include <signal.h>
 #define _POSIX_SOURCE 1
+
+#else // OSX
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <errno.h>
+#include <signal.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOKitLib.h>
+#include <IOKit/serial/IOSerialKeys.h>
+#include <IOKit/serial/ioss.h>
+#include <IOKit/IOBSD.h>
+
+#endif // ifdef __linux__
+
 #endif
 
 
@@ -167,7 +187,15 @@ namespace ssr {
       ///std::cout << "fopen ok" << std::endl;
       struct termios tio;
       memset(&tio, 0, sizeof(tio));
+#ifdef __linux__
       cfsetspeed(&tio, baudrate);
+#else // OSX
+      speed_t speed = baudrate;
+      if ( ioctl(m_Fd, IOSSIOSPEED, &speed ) == -1 ) {
+	throw ComStateException();
+      }
+
+#endif
       tio.c_cflag |= CS8 | CLOCAL | CREAD;
       if (stopbits == TWO_STOPBITS) {
 	tio.c_cflag |= CSTOPB;
