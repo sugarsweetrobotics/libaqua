@@ -18,7 +18,7 @@ namespace ssr {
   class TimeoutException : public std::exception {
   public:
     TimeoutException() {}
-    virtual ~TimeoutException() {}
+    virtual ~TimeoutException() throw() {}
 
   public:
     const char* what() const throw() {
