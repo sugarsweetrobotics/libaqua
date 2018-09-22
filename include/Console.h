@@ -24,7 +24,8 @@ namespace ssr {
 #else
 #include <unistd.h>
 #include <termios.h>
-        struct termios m_oldTermios;
+  
+  static struct termios m_oldTermios;
 #endif
 
 
@@ -50,9 +51,9 @@ static void init_scr() {
 
 static void clear_scr() {
 #ifdef WIN32
-	system("cls");
+  system("cls");
 #else
-    system("clear");
+  system("clear");
 #endif
 }
 
