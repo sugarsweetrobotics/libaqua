@@ -141,7 +141,7 @@ namespace ssr {
 
     Socket Accept() {
 #ifdef WIN32
-		struct sockaddr_in sockaddr_;
+		struct sockaddr_in sockaddr_ = m_SockAddr;
 		SOCKET client_sock;
 		int len;
 		len = sizeof(sockaddr_);

@@ -8,6 +8,7 @@
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
+#include <WS2tcpip.h>
 #include <windows.h>
 
 #include <stdio.h>
@@ -130,21 +131,33 @@ namespace ssr {
       m_SockAddr.sin_family = AF_INET;
       m_SockAddr.sin_port = htons(port);
       
-      m_SockAddr.sin_addr.S_un.S_addr = inet_addr(address);
-      if (m_SockAddr.sin_addr.S_un.S_addr == 0xffffffff) {
-	struct hostent *host;
-	
-	host = gethostbyname(address);
-	if (host == NULL) {
-	  throw SocketException("gethostbyname failed.");
-	}
-	m_SockAddr.sin_addr.S_un.S_addr =
-	  *(unsigned int *)host->h_addr_list[0];
-      }
-      
+      // m_SockAddr.sin_addr.S_un.S_addr = inet_addr(address);
+	  inet_pton(AF_INET, address, &m_SockAddr.sin_addr.S_un.S_addr);
+	  if (m_SockAddr.sin_addr.S_un.S_addr == 0xffffffff) {
+		  //struct hostent *host;
+		  struct addrinfo hints, *addrinfo;
+
+		  //	host = gethostbyname(address);
+		  int err;
+
+		  //	if (host == NULL) {
+		  if (err = getaddrinfo(address, NULL, &hints, &addrinfo) != 0) {
+			  throw SocketException("gethostbyname failed.");
+		  }
+
+		  m_SockAddr.sin_addr.S_un = ((struct sockaddr_in *)(addrinfo->ai_addr))->sin_addr.S_un;
+		  /*
+		  m_SockAddr.sin_addr.S_un.S_addr =
+			*(unsigned int *)host->h_addr_list[0];
+			}
+			*/
+
+		  freeaddrinfo(addrinfo);
+	  }
       if (connect(m_Socket, (struct sockaddr *)&m_SockAddr, sizeof(m_SockAddr)) < 0) {
 	throw SocketException("connect failed.");
       }
+
       
 #else
       memset((char*)&m_SockAddr, 0, sizeof(m_SockAddr));
