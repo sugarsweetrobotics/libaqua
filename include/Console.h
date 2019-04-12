@@ -21,10 +21,11 @@ namespace ssr {
 
 #ifdef WIN32
 #include <conio.h>
+
 #else
 #include <unistd.h>
 #include <termios.h>
-        struct termios m_oldTermios;
+  static struct termios m_oldTermios;
 #endif
 
 
