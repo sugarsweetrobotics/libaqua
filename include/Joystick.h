@@ -45,12 +45,11 @@ namespace ssr {
 
   class Joystick {
   public:
-    int axis[8];
-    int buttons[12];
-    int button_old[12];
-  public:
+    std::vector<float> axis;
+    std::vector<bool> buttons;
+    std::vector<bool> old_buttons;
 
-#ifdef USE_FSML
+#ifdef USE_SFML
   private:
     int m_id;
   public:
@@ -61,6 +60,9 @@ namespace ssr {
 	std::cout << "[RTC::SFMLJoystick] Joystick (id=" << id << ") not found." << std::endl;
 	throw new JoystickNotFoundException();
       }
+      axis.resize(8,0);
+      buttons.resize(12,0);
+      old_buttons.resize(12,0);
     }
 
 #elif LINUX
@@ -81,59 +83,57 @@ namespace ssr {
       ioctl(joy_fd, JSIOCGBUTTONS, &num_of_buttons);
       ioctl(joy_fd, JSIOCGNAME(80), &name_of_joystick);
       
-      joy_button.resize(num_of_buttons,0);
-      joy_axis.resize(num_of_axis,0);
+      buttons.resize(num_of_buttons,0);
+      old_buttons.resize(num_of_buttons,0);
+      axis.resize(num_of_axis,0);
   
       fcntl(joy_fd, F_SETFL, O_NONBLOCK);   // using non-blocking mode
     }
 #endif
 
-  };
-
- public:
-  void update() {
+  public:
+    void update() {
 #ifdef USE_SFML
-    sf::Joystick::update();
-    if (!sf::Joystick::isConnected(m_id)) {
-      std::cout << "[RTC::SFMLJoystick] Joystick (id=" << id << ") not found." << std::endl;
-      throw new JoystickNotFoundException();
-    }
-
-    bool buttonStateUpdated = false;
-    for (size_t i = 0; i < sf::Joystick::getButtonCount(m_id); i++) {
-      button_old[i] = button[i];
-      button[i] = sf::Joystick::isButtonPressed(m_id, i);
-      buttonStateUpdated |= button[i] != button_old[i];
-    }
-    
-    axis[0] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::X);
-    axis[1] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::Y);
-    axis[2] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::Z);
-    
-    axis[3] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::R);
-    axis[4] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::U);
-    axis[5] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::V);
-    
-    axis[6] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::PovX);
-    axis[7] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::PovY);
-
+      sf::Joystick::update();
+      if (!sf::Joystick::isConnected(m_id)) {
+	std::cout << "[RTC::SFMLJoystick] Joystick (id=" << m_id << ") not found." << std::endl;
+	throw new JoystickNotFoundException();
+      }
+      
+      bool buttonStateUpdated = false;
+      for (size_t i = 0; i < sf::Joystick::getButtonCount(m_id); i++) {
+	old_buttons[i] = buttons[i];
+	buttons[i] = sf::Joystick::isButtonPressed(m_id, i);
+	buttonStateUpdated |= buttons[i] != old_buttons[i];
+      }
+      
+      axis[0] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::X);
+      axis[1] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::Y);
+      axis[2] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::Z);
+      
+      axis[3] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::R);
+      axis[4] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::U);
+      axis[5] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::V);
+      
+      axis[6] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::PovX);
+      axis[7] = sf::Joystick::getAxisPosition(m_id, sf::Joystick::PovY);
+      
 #elif LINUX
-    js_event js;
-    read(joy_fd, &js, sizeof(js_event));
-    switch (js.type & ~JS_EVENT_INIT) {
-    case JS_EVENT_AXIS:
-      if((int)js.number>=joy_axis.size())  {std::cerr<<"err:"<<(int)js.number<<std::endl;}
-      axis[(int)js.number]= js.value / 300.0;
-      break;
-    case JS_EVENT_BUTTON:
-      if((int)js.number>=joy_button.size())  {std::cerr<<"err:"<<(int)js.number<<std::endl;}
-      button_old[(int)js.number] = button[(int)js.number];
-      button[(int)js.number]= js.value;
-      break;
-    }
+      js_event js;
+      read(joy_fd, &js, sizeof(js_event));
+      switch (js.type & ~JS_EVENT_INIT) {
+      case JS_EVENT_AXIS:
+	if((int)js.number>=joy_axis.size())  {std::cerr<<"err:"<<(int)js.number<<std::endl;}
+	axis[(int)js.number]= js.value / 300.0;
+	break;
+      case JS_EVENT_BUTTON:
+	if((int)js.number>=joy_button.size())  {std::cerr<<"err:"<<(int)js.number<<std::endl;}
+	button_old[(int)js.number] = button[(int)js.number];
+	button[(int)js.number]= js.value;
+	break;
+      }
 #endif
-
-
-  }
-
+    }
+  };
+  
 };
