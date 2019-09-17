@@ -48,13 +48,24 @@ namespace ssr {
 
 		~SocketInitializer() {
 #ifdef WIN32
-			WSAStartup(MAKEWORD(2, 0), &wsaData);
+			//WSAStartup(MAKEWORD(2, 0), &wsaData);
 #else
 
 #endif
 		}
 
+
 	};
+
+    void initializeSocket() {
+#ifdef WIN32
+        WSADATA wsaData;
+        WSAStartup(MAKEWORD(2, 0), &wsaData);
+#else
+
+#endif
+    }
+    
 	
 
   class SocketException : public std::exception {
